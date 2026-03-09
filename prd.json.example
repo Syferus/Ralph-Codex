@@ -1,6 +1,10 @@
 {
   "project": "MyApp",
   "branchName": "ralph/task-priority",
+  "loopConfig": {
+    "fastCiCommand": "./scripts/ci_fast.sh",
+    "mergeMethod": "merge"
+  },
   "description": "Task Priority System - Add priority levels to tasks",
   "userStories": [
     {
@@ -10,11 +14,11 @@
       "acceptanceCriteria": [
         "Add priority column to tasks table: 'high' | 'medium' | 'low' (default 'medium')",
         "Generate and run migration successfully",
-        "Typecheck passes"
+        "Fast CI command passes"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "notes": "",
+      "branchName": "codex/us-001-add-priority-field"
     },
     {
       "id": "US-002",
@@ -23,12 +27,12 @@
       "acceptanceCriteria": [
         "Each task card shows colored priority badge (red=high, yellow=medium, gray=low)",
         "Priority visible without hovering or clicking",
-        "Typecheck passes",
+        "Fast CI command passes",
         "Verify in browser using dev-browser skill"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "notes": "",
+      "branchName": "codex/us-002-display-priority-indicator"
     },
     {
       "id": "US-003",
@@ -38,12 +42,12 @@
         "Priority dropdown in task edit modal",
         "Shows current priority as selected",
         "Saves immediately on selection change",
-        "Typecheck passes",
+        "Fast CI command passes",
         "Verify in browser using dev-browser skill"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "notes": "",
+      "branchName": "codex/us-003-add-priority-selector"
     },
     {
       "id": "US-004",
@@ -53,12 +57,12 @@
         "Filter dropdown with options: All | High | Medium | Low",
         "Filter persists in URL params",
         "Empty state message when no tasks match filter",
-        "Typecheck passes",
+        "Fast CI command passes",
         "Verify in browser using dev-browser skill"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "notes": "",
+      "branchName": "codex/us-004-filter-by-priority"
     }
   ]
 }

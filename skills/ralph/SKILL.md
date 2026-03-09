@@ -22,6 +22,10 @@ Take a PRD (markdown file or text) and convert it to `prd.json` in your ralph di
 {
   "project": "[Project Name]",
   "branchName": "ralph/[feature-name-kebab-case]",
+  "loopConfig": {
+    "fastCiCommand": "./scripts/ci_fast.sh",
+    "mergeMethod": "merge"
+  },
   "description": "[Feature description from PRD title/intro]",
   "userStories": [
     {
@@ -31,11 +35,11 @@ Take a PRD (markdown file or text) and convert it to `prd.json` in your ralph di
       "acceptanceCriteria": [
         "Criterion 1",
         "Criterion 2",
-        "Typecheck passes"
+        "Fast CI command passes"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "notes": "",
+      "branchName": "codex/[story-kebab-case]"
     }
   ]
 }
@@ -88,7 +92,7 @@ Each criterion must be something Ralph can CHECK, not something vague.
 - "Add `status` column to tasks table with default 'pending'"
 - "Filter dropdown has options: All, Active, Completed"
 - "Clicking delete shows confirmation dialog"
-- "Typecheck passes"
+- "Fast CI command passes"
 - "Tests pass"
 
 ### Bad criteria (vague):
@@ -99,7 +103,7 @@ Each criterion must be something Ralph can CHECK, not something vague.
 
 ### Always include as final criterion:
 ```
-"Typecheck passes"
+"Fast CI command passes"
 ```
 
 For stories with testable logic, also include:
@@ -121,9 +125,10 @@ Frontend stories are NOT complete until visually verified. Ralph will use the de
 1. **Each user story becomes one JSON entry**
 2. **IDs**: Sequential (US-001, US-002, etc.)
 3. **Priority**: Based on dependency order, then document order
-4. **All stories**: `passes: false` and empty `notes`
-5. **branchName**: Derive from feature name, kebab-case, prefixed with `ralph/`
-6. **Always add**: "Typecheck passes" to every story's acceptance criteria
+4. **Top-level `loopConfig`**: Include `fastCiCommand` and `mergeMethod`
+5. **All stories**: empty `notes`
+6. **Story `branchName`**: Derive from story title, kebab-case, prefixed with `codex/`
+7. **Always add**: "Fast CI command passes" to every story's acceptance criteria
 
 ---
 
@@ -166,6 +171,10 @@ Add ability to mark tasks with different statuses.
 {
   "project": "TaskApp",
   "branchName": "ralph/task-status",
+  "loopConfig": {
+    "fastCiCommand": "./scripts/ci_fast.sh",
+    "mergeMethod": "merge"
+  },
   "description": "Task Status Feature - Track task progress with status indicators",
   "userStories": [
     {
@@ -175,11 +184,11 @@ Add ability to mark tasks with different statuses.
       "acceptanceCriteria": [
         "Add status column: 'pending' | 'in_progress' | 'done' (default 'pending')",
         "Generate and run migration successfully",
-        "Typecheck passes"
+        "Fast CI command passes"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "notes": "",
+      "branchName": "codex/us-001-add-status-field"
     },
     {
       "id": "US-002",
@@ -188,12 +197,12 @@ Add ability to mark tasks with different statuses.
       "acceptanceCriteria": [
         "Each task card shows colored status badge",
         "Badge colors: gray=pending, blue=in_progress, green=done",
-        "Typecheck passes",
+        "Fast CI command passes",
         "Verify in browser using dev-browser skill"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "notes": "",
+      "branchName": "codex/us-002-display-status-badge"
     },
     {
       "id": "US-003",
@@ -203,12 +212,12 @@ Add ability to mark tasks with different statuses.
         "Each row has status dropdown or toggle",
         "Changing status saves immediately",
         "UI updates without page refresh",
-        "Typecheck passes",
+        "Fast CI command passes",
         "Verify in browser using dev-browser skill"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "notes": "",
+      "branchName": "codex/us-003-add-status-toggle"
     },
     {
       "id": "US-004",
@@ -217,12 +226,12 @@ Add ability to mark tasks with different statuses.
       "acceptanceCriteria": [
         "Filter dropdown: All | Pending | In Progress | Done",
         "Filter persists in URL params",
-        "Typecheck passes",
+        "Fast CI command passes",
         "Verify in browser using dev-browser skill"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "notes": "",
+      "branchName": "codex/us-004-filter-by-status"
     }
   ]
 }
@@ -252,7 +261,8 @@ Before writing prd.json, verify:
 - [ ] **Previous run archived** (if prd.json exists with different branchName, archive it first)
 - [ ] Each story is completable in one iteration (small enough)
 - [ ] Stories are ordered by dependency (schema to backend to UI)
-- [ ] Every story has "Typecheck passes" as criterion
+- [ ] `loopConfig.fastCiCommand` is present
+- [ ] Every story has "Fast CI command passes" as criterion
 - [ ] UI stories have "Verify in browser using dev-browser skill" as criterion
 - [ ] Acceptance criteria are verifiable (not vague)
 - [ ] No story depends on a later story
