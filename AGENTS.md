@@ -21,6 +21,9 @@ cd flowchart && npm run build
 
 # Run Ralph with Codex CLI
 ./ralph.sh --tool codex [max_iterations]
+
+# Run the lightweight Codex loop against a plan document
+./ralph-lite.sh --plan /absolute/path/to/plan.md [--iterations N] [--audit-iterations N]
 ```
 
 ## Key Files
@@ -29,6 +32,8 @@ cd flowchart && npm run build
 - `prompt.md` - Instructions given to each AMP instance
 - `CLAUDE.md` - Instructions given to each Claude Code instance
 - `CODEX.md` - Instructions given to each Codex CLI instance
+- `LIGHT_CODEX.md` - Instructions for the lightweight Codex-only plan loop
+- `ralph-lite.sh` - Minimal visible-terminal Codex loop for plan documents
 - `prd.json.example` - Example PRD format
 - `flowchart/` - Interactive React Flow diagram explaining how Ralph works
 
@@ -47,5 +52,6 @@ npm run dev
 
 - Each iteration spawns a fresh AI instance (Amp, Claude Code, or Codex CLI) with clean context
 - Memory persists via git history, `progress.txt`, and `prd.json`
+- The lightweight loop persists only minimal runtime state in `.git/ralph-lite-state.json`
 - Stories should be small enough to complete in one context window
 - Always update AGENTS.md with discovered patterns for future iterations
