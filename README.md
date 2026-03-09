@@ -112,7 +112,7 @@ This creates `prd.json` with user stories structured for autonomous execution.
 
 ### 2.5. Add the loop contract
 
-Every `prd.json` must define a lightweight merge gate:
+You can define a lightweight merge gate:
 
 ```json
 {
@@ -123,7 +123,9 @@ Every `prd.json` must define a lightweight merge gate:
 }
 ```
 
-Ralph always uses `loopConfig.fastCiCommand` as the required validation gate for story branches. This should be the fast CI path, not a full release-grade CI run.
+If `loopConfig.fastCiCommand` is present, Ralph uses it as the required validation gate for story branches. This should be the fast CI path, not a full release-grade CI run.
+
+If `loopConfig.fastCiCommand` is omitted, Ralph falls back to the repository's default merge gate and tells the agent to run the normal CI, test, or typecheck command set for that codebase.
 
 ### 3. Run Ralph
 
@@ -144,7 +146,7 @@ Ralph will:
 1. Initialize or update a local runtime state file under `.git/ralph-state.json`
 2. Pick the highest-priority story whose runtime state is not `merged`
 3. Implement or resume that story on its own branch
-4. Run only the configured fast CI command
+4. Run the configured fast CI command, or fall back to the repository's default merge gate
 5. Push the branch and open or update a PR to `main`
 6. Mark the story `ready_to_merge` in local state when the branch tip is validated
 7. Auto-merge the PR when it is mergeable
@@ -160,7 +162,7 @@ Ralph will:
 | `prompt.md` | Prompt template for Amp |
 | `CLAUDE.md` | Prompt template for Claude Code |
 | `CODEX.md` | Prompt template for Codex CLI |
-| `prd.json` | Static task list plus `loopConfig.fastCiCommand` |
+| `prd.json` | Static task list plus optional `loopConfig.fastCiCommand` |
 | `.git/ralph-state.json` | Local runtime state (`pending`, `in_progress`, `blocked`, `in_review`, `ready_to_merge`, `merged`) |
 | `prd.json.example` | Example PRD format for reference |
 | `progress.txt` | Append-only learnings for future iterations |
@@ -190,7 +192,7 @@ npm run dev
 Each iteration spawns a **new AI instance** (Amp, Claude Code, or Codex CLI) with clean context. The only memory between iterations is:
 - Git history (commits from previous iterations)
 - `progress.txt` (learnings and context)
-- `prd.json` (static stories and fast-CI contract)
+- `prd.json` (static stories and optional fast-CI contract)
 - `.git/ralph-state.json` (runtime lifecycle and PR metadata)
 
 ### Small Tasks
@@ -217,9 +219,11 @@ Examples of what to add to AGENTS.md:
 - Gotchas ("do not forget to update Z when changing W")
 - Useful context ("the settings panel is in component X")
 
-### Fast CI Only
+### Validation Gate
 
-The base Ralph loop should always use the lightweight gate you provide in `loopConfig.fastCiCommand`. That is the default merge gate for every story branch.
+If you provide `loopConfig.fastCiCommand`, the base Ralph loop uses that lightweight gate as the default merge gate for every story branch.
+
+If you do not provide `loopConfig.fastCiCommand`, the base Ralph loop falls back to the repository's normal merge gate.
 
 If you want slower or broader validation, keep it outside the base loop or add it as an explicit later story.
 
