@@ -2,7 +2,7 @@
 
 ![Ralph](ralph.webp)
 
-Ralph is an autonomous AI agent loop that runs AI coding tools ([Amp](https://ampcode.com), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), or Codex CLI) repeatedly until all PRD items are complete. Each iteration is a fresh instance with clean context. Memory persists via git history, `progress.txt`, and `prd.json`.
+Ralph is an autonomous AI agent loop that runs AI coding tools ([Amp](https://ampcode.com), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), or Codex CLI) repeatedly until every planned story has been turned into a merged PR. Each iteration is a fresh instance with clean context. Static task definition lives in `prd.json`; runtime lifecycle is tracked in a local state file under `.git`.
 
 Based on [Geoffrey Huntley's Ralph pattern](https://ghuntley.com/ralph/).
 
@@ -110,6 +110,21 @@ Load the ralph skill and convert tasks/prd-[feature-name].md to prd.json
 
 This creates `prd.json` with user stories structured for autonomous execution.
 
+### 2.5. Add the loop contract
+
+Every `prd.json` must define a lightweight merge gate:
+
+```json
+{
+  "loopConfig": {
+    "fastCiCommand": "./scripts/ci_fast.sh",
+    "mergeMethod": "merge"
+  }
+}
+```
+
+Ralph always uses `loopConfig.fastCiCommand` as the required validation gate for story branches. This should be the fast CI path, not a full release-grade CI run.
+
 ### 3. Run Ralph
 
 ```bash
@@ -126,14 +141,16 @@ This creates `prd.json` with user stories structured for autonomous execution.
 Default is 10 iterations. Use `--tool amp`, `--tool claude`, or `--tool codex` to select your AI coding tool.
 
 Ralph will:
-1. Create a feature branch (from PRD `branchName`)
-2. Pick the highest priority story where `passes: false`
-3. Implement that single story
-4. Run quality checks (typecheck, tests)
-5. Commit if checks pass
-6. Update `prd.json` to mark story as `passes: true`
-7. Append learnings to `progress.txt`
-8. Repeat until all stories pass or max iterations reached
+1. Initialize or update a local runtime state file under `.git/ralph-state.json`
+2. Pick the highest-priority story whose runtime state is not `merged`
+3. Implement or resume that story on its own branch
+4. Run only the configured fast CI command
+5. Push the branch and open or update a PR to `main`
+6. Mark the story `ready_to_merge` in local state when the branch tip is validated
+7. Auto-merge the PR when it is mergeable
+8. Sync merged PRs back into local state
+9. Append learnings to `progress.txt`
+10. Repeat until all stories are merged or max iterations reached
 
 ## Key Files
 
@@ -143,7 +160,8 @@ Ralph will:
 | `prompt.md` | Prompt template for Amp |
 | `CLAUDE.md` | Prompt template for Claude Code |
 | `CODEX.md` | Prompt template for Codex CLI |
-| `prd.json` | User stories with `passes` status (the task list) |
+| `prd.json` | Static task list plus `loopConfig.fastCiCommand` |
+| `.git/ralph-state.json` | Local runtime state (`pending`, `in_progress`, `blocked`, `in_review`, `ready_to_merge`, `merged`) |
 | `prd.json.example` | Example PRD format for reference |
 | `progress.txt` | Append-only learnings for future iterations |
 | `skills/prd/` | Skill for generating PRDs (works with Amp and Claude Code) |
@@ -172,7 +190,8 @@ npm run dev
 Each iteration spawns a **new AI instance** (Amp, Claude Code, or Codex CLI) with clean context. The only memory between iterations is:
 - Git history (commits from previous iterations)
 - `progress.txt` (learnings and context)
-- `prd.json` (which stories are done)
+- `prd.json` (static stories and fast-CI contract)
+- `.git/ralph-state.json` (runtime lifecycle and PR metadata)
 
 ### Small Tasks
 
@@ -198,12 +217,11 @@ Examples of what to add to AGENTS.md:
 - Gotchas ("do not forget to update Z when changing W")
 - Useful context ("the settings panel is in component X")
 
-### Feedback Loops
+### Fast CI Only
 
-Ralph only works if there are feedback loops:
-- Typecheck catches type errors
-- Tests verify behavior
-- CI must stay green (broken code compounds across iterations)
+The base Ralph loop should always use the lightweight gate you provide in `loopConfig.fastCiCommand`. That is the default merge gate for every story branch.
+
+If you want slower or broader validation, keep it outside the base loop or add it as an explicit later story.
 
 ### Browser Verification for UI Stories
 
@@ -211,15 +229,18 @@ Frontend stories must include "Verify in browser using dev-browser skill" in acc
 
 ### Stop Condition
 
-When all stories have `passes: true`, Ralph outputs `<promise>COMPLETE</promise>` and the loop exits.
+When all stories are `merged` in the local runtime state file, Ralph outputs `<promise>COMPLETE</promise>` and the loop exits.
 
 ## Debugging
 
 Check current state:
 
 ```bash
-# See which stories are done
-cat prd.json | jq '.userStories[] | {id, title, passes}'
+# See static story definitions
+cat prd.json | jq '.userStories[] | {id, title, priority, branchName}'
+
+# See runtime story lifecycle
+cat .git/ralph-state.json | jq '.stories'
 
 # See learnings from previous iterations
 cat progress.txt
@@ -231,7 +252,7 @@ git log --oneline -10
 ## Customizing the Prompt
 
 After copying `prompt.md` (for Amp), `CLAUDE.md` (for Claude Code), or `CODEX.md` (for Codex CLI) to your project, customize it for your project:
-- Add project-specific quality check commands
+- Add project-specific branch/PR conventions
 - Include codebase conventions
 - Add common gotchas for your stack
 
