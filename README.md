@@ -154,6 +154,35 @@ Ralph will:
 9. Append learnings to `progress.txt`
 10. Repeat until all stories are merged or max iterations reached
 
+## Ralph Light
+
+`ralph-lite.sh` is the stripped-down Codex-only loop for a plain task-list or PR-plan document. It does not require `prd.json`, story state machines, or per-story bookkeeping.
+
+What it does:
+- reads one plan document
+- tells Codex to complete the plan end to end
+- once the plan is done, switches into audit mode
+- lets Codex find and complete one extra worthwhile issue per iteration
+- stops after the configured audit budget is exhausted, or earlier if Codex reports there is nothing worthwhile left
+- opens in a visible Terminal window by default on macOS
+
+Run it like this:
+
+```bash
+./ralph-lite.sh --plan /absolute/path/to/plan.md --iterations 20 --audit-iterations 3
+```
+
+Useful flags:
+- `--iterations N`: total loop budget
+- `--audit-iterations N`: how many extra audit passes to allow after the original plan is complete
+- `--inline`: run in the current terminal instead of launching Terminal.app
+
+Files used by Ralph Light:
+- [ralph-lite.sh](/Volumes/datadisk0/data/appdata/repositories/Ralph-Codex/ralph-lite.sh)
+- [LIGHT_CODEX.md](/Volumes/datadisk0/data/appdata/repositories/Ralph-Codex/LIGHT_CODEX.md)
+- `.git/ralph-lite-state.json`
+- `.git/ralph-lite.log`
+
 ## Key Files
 
 | File | Purpose |
