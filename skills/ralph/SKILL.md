@@ -101,10 +101,12 @@ Each criterion must be something Ralph can CHECK, not something vague.
 - "Good UX"
 - "Handles edge cases"
 
-### Always include as final criterion:
+### Always include as final criterion when `fastCiCommand` is present:
 ```
 "Fast CI command passes"
 ```
+
+If `fastCiCommand` is omitted, replace that with a criterion that names the repository's default CI, test, or typecheck gate.
 
 For stories with testable logic, also include:
 ```
@@ -125,10 +127,10 @@ Frontend stories are NOT complete until visually verified. Ralph will use the de
 1. **Each user story becomes one JSON entry**
 2. **IDs**: Sequential (US-001, US-002, etc.)
 3. **Priority**: Based on dependency order, then document order
-4. **Top-level `loopConfig`**: Include `fastCiCommand` and `mergeMethod`
+4. **Top-level `loopConfig`**: Include `mergeMethod`, and include `fastCiCommand` when the repo has a lightweight CI path
 5. **All stories**: empty `notes`
 6. **Story `branchName`**: Derive from story title, kebab-case, prefixed with `codex/`
-7. **Always add**: "Fast CI command passes" to every story's acceptance criteria
+7. **Always add**: "Fast CI command passes" to every story's acceptance criteria when `fastCiCommand` is present. Otherwise use a criterion that refers to the repository's default CI, test, or typecheck gate.
 
 ---
 
@@ -261,8 +263,8 @@ Before writing prd.json, verify:
 - [ ] **Previous run archived** (if prd.json exists with different branchName, archive it first)
 - [ ] Each story is completable in one iteration (small enough)
 - [ ] Stories are ordered by dependency (schema to backend to UI)
-- [ ] `loopConfig.fastCiCommand` is present
-- [ ] Every story has "Fast CI command passes" as criterion
+- [ ] `loopConfig.fastCiCommand` is present when the repo has a lightweight CI path
+- [ ] Every story has a validation criterion that matches either `fastCiCommand` or the repository's default CI gate
 - [ ] UI stories have "Verify in browser using dev-browser skill" as criterion
 - [ ] Acceptance criteria are verifiable (not vague)
 - [ ] No story depends on a later story

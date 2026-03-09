@@ -85,7 +85,7 @@ ensure_state_file() {
   mv "$tmp_file" "$STATE_FILE"
 }
 
-fast_ci_command() {
+validation_command() {
   jq -r '.loopConfig.fastCiCommand // empty' "$PRD_FILE"
 }
 
@@ -140,10 +140,8 @@ update_story_state() {
 sync_pr_state() {
   ensure_state_file
 
-  local story_ids story_id pr_number pr_json pr_state pr_url merge_sha
-  mapfile -t story_ids < <(jq -r '.stories | keys[]' "$STATE_FILE")
-
-  for story_id in "${story_ids[@]}"; do
+  local story_id pr_number pr_json pr_state pr_url merge_sha
+  while IFS= read -r story_id; do
     pr_number="$(jq -r --arg story_id "$story_id" '.stories[$story_id].prNumber // empty' "$STATE_FILE")"
     if [[ -z "$pr_number" ]]; then
       continue
@@ -166,14 +164,14 @@ sync_pr_state() {
       current_fast_ci="$(jq -r --arg story_id "$story_id" '.stories[$story_id].fastCiPassed // false' "$STATE_FILE")"
       update_story_state "$story_id" "$current_status" "$pr_number" "$pr_url" "" "" "" "$current_fast_ci"
     fi
-  done
+  done < <(jq -r '.stories | keys[]' "$STATE_FILE")
 }
 
 auto_merge_ready_prs() {
   ensure_state_file
   sync_pr_state
 
-  local method merge_flag ready_story_ids story_id pr_number
+  local method merge_flag story_id pr_number
   method="$(merge_method)"
   case "$method" in
     squash) merge_flag="--squash" ;;
@@ -181,13 +179,12 @@ auto_merge_ready_prs() {
     *) merge_flag="--merge" ;;
   esac
 
-  mapfile -t ready_story_ids < <(jq -r '.stories | to_entries[] | select(.value.status == "ready_to_merge" and (.value.prNumber != null)) | .key' "$STATE_FILE")
-  for story_id in "${ready_story_ids[@]}"; do
+  while IFS= read -r story_id; do
     pr_number="$(jq -r --arg story_id "$story_id" '.stories[$story_id].prNumber' "$STATE_FILE")"
     if gh pr merge "$pr_number" "$merge_flag" --delete-branch >/dev/null 2>&1; then
       sync_pr_state
     fi
-  done
+  done < <(jq -r '.stories | to_entries[] | select(.value.status == "ready_to_merge" and (.value.prNumber != null)) | .key' "$STATE_FILE")
 }
 
 if [[ -f "$PRD_FILE" ]] && [[ -f "$LAST_BRANCH_FILE" ]]; then
@@ -243,11 +240,7 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
     exit 0
   fi
 
-  FAST_CI_COMMAND="$(fast_ci_command)"
-  if [[ -z "$FAST_CI_COMMAND" ]]; then
-    echo "Error: prd.json must define loopConfig.fastCiCommand."
-    exit 1
-  fi
+  FAST_CI_COMMAND="$(validation_command)"
 
   if [[ "$TOOL" == "amp" ]]; then
     OUTPUT="$(RALPH_STATE_FILE="$STATE_FILE" RALPH_FAST_CI_COMMAND="$FAST_CI_COMMAND" RALPH_MERGE_METHOD="$(merge_method)" amp --dangerously-allow-all < "$SCRIPT_DIR/prompt.md" 2>&1 | tee /dev/stderr)" || true
